@@ -1,13 +1,16 @@
 package com.example.imageapplication
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Point
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.Settings
 import android.util.Log
 import android.view.Window
 import android.widget.Button
@@ -19,6 +22,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.example.imageapplication.float.SimpleFloatingWindow
+import com.example.imageapplication.float.canDrawOverlays
+import com.example.imageapplication.float.showToast
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -26,6 +32,8 @@ import java.util.*
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var floatImage: ActivityResultLauncher<String>
+    private lateinit var simpleFloatingWindow: SimpleFloatingWindow
     private var uri: Uri? = null
     private lateinit var currentImagePath: String
     private var split_image: Button? = null
@@ -52,8 +60,15 @@ class MainActivity : AppCompatActivity() {
         split_image = findViewById(R.id.btn_splitImage)
 
 
+        simpleFloatingWindow = SimpleFloatingWindow(applicationContext)
+
         split_image?.setOnClickListener {
-            splitImage(sourceImage!!,9)
+            //splitImage(sourceImage!!,3)
+            if (canDrawOverlays) {
+                simpleFloatingWindow.show()
+            } else {
+                startManageDrawOverlaysPermission()
+            }
         }
 
 
@@ -64,14 +79,36 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        floatImage = registerForActivityResult(ActivityResultContracts.GetContent()){
+            if(it != null){
+                if(canDrawOverlays){
+                    simpleFloatingWindow.show()
+                }else{
+                    showToast("Permission is required")
+                }
+            }
+        }
+
         btnGallery?.setOnClickListener {
             pickImageFromGallery(loadImage)
         }
     }
 
 
+    private fun startManageDrawOverlaysPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${applicationContext.packageName}")
+            ).let {
+                floatImage.launch(null)
+                //startActivityForResult(it, REQUEST_CODE_DRAW_OVERLAY_PERMISSION)
+            }
+        }
+    }
+
     fun createImageFile():File{
-        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss").format(Date())
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageDirectory = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         return File.createTempFile("Specimen_${timestamp}",".jpg",imageDirectory).apply {
             currentImagePath = absolutePath
@@ -127,7 +164,7 @@ class MainActivity : AppCompatActivity() {
                 ActivityCompat.requestPermissions(this, arrayOf(
                     android.Manifest.permission.READ_EXTERNAL_STORAGE),2)
             }else{
-                loadImage.launch("images/*")
+                loadImage.launch("image/*")
 
             }
         }
@@ -476,4 +513,8 @@ class MainActivity : AppCompatActivity() {
         sourceImage?.setImageBitmap(chunkedImage?.get(1))
     }
 
+
+    companion object {
+        private const val REQUEST_CODE_DRAW_OVERLAY_PERMISSION = 5
+    }
 }
