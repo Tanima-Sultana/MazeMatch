@@ -61,21 +61,19 @@ class MainActivity : AppCompatActivity() {
 
 
         simpleFloatingWindow = SimpleFloatingWindow(applicationContext)
-
-        split_image?.setOnClickListener {
-            //splitImage(sourceImage!!,3)
-            if (canDrawOverlays) {
-                simpleFloatingWindow.show()
-            } else {
-                startManageDrawOverlaysPermission()
-            }
-        }
+//        if ()
+//
+//        split_image?.setOnClickListener {
+//           cropImage()
+//
+//        }
 
 
         val loadImage = registerForActivityResult(ActivityResultContracts.GetContent()){
             if(it != null){
                 Log.d("MainActivity","image data : $it and ${it.path}")
                 sourceImage?.setImageURI(it)
+                cropImage(it)
             }
         }
 
@@ -94,18 +92,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
-    private fun startManageDrawOverlaysPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Intent(
-                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:${applicationContext.packageName}")
-            ).let {
-                floatImage.launch(null)
-                //startActivityForResult(it, REQUEST_CODE_DRAW_OVERLAY_PERMISSION)
-            }
-        }
-    }
 
     fun createImageFile():File{
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -147,10 +133,30 @@ class MainActivity : AppCompatActivity() {
             Log.d("CameraImage","Image location :$uri")
             // The image was saved into the given Uri -> do something with it
             sourceImage?.setImageURI(uri)
+            cropImage(uri)
             //Picasso.get().load(viewModel.profileImageUri).resize(800,800).into(registerImgAvatar)
         }else{
             Log.d("CameraImage","Image is not saved")
 
+        }
+    }
+
+    private fun cropImage(uri: Uri?) {
+        val intent = Intent(this,MergedImage::class.java)
+        intent.putExtra("DATA",uri?.toString())
+        startActivityForResult(intent,101)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if( resultCode == -1 && requestCode == 101){
+            val result = data?.getStringExtra("RESULT")
+            var resultUri:Uri? = null
+            if (result != null){
+                resultUri = Uri.parse(result)
+            }
+
+            sourceImage?.setImageURI(resultUri)
         }
     }
 

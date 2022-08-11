@@ -6,13 +6,6 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        android:layout_gravity="center_horizontal"
-
-         />
 
     <Button
         android:layout_width="wrap_content"
@@ -24,9 +17,10 @@
 
 
     <ImageView
-        android:layout_width="300dp"
+        android:layout_width="match_parent"
         android:layout_height="300dp"
         android:id="@+id/iv_souceImage"
+
         android:layout_gravity="center_horizontal"
         android:background="@color/cardview_dark_background"/>
 
@@ -36,5 +30,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
         android:id="@+id/btn_splitImage"
-        android:text="Split Image"/>
+        android:visibility="gone"
+        android:text="Edit Image"/>
 </LinearLayout>
