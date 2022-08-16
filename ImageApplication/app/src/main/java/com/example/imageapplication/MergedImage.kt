@@ -29,8 +29,9 @@ class MergedImage : AppCompatActivity() {
             .append(".jpg").toString()
 
         val options:UCrop.Options = UCrop.Options()
+        //options.setCircleDimmedLayer(true)
 
-        val a = fileUri?.let {
+        val croppedIntent = fileUri?.let {
             UCrop.of(it,Uri.fromFile(File(cacheDir,destinationUri)))
                 .withOptions(options)
                 .withAspectRatio(0F, 0F)
@@ -40,7 +41,7 @@ class MergedImage : AppCompatActivity() {
                 //.start(this)
         }
 
-        val b = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result1 ->
+        val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result1 ->
             if( result1.resultCode == Activity.RESULT_OK ){
                 val resultUri = result1.data?.let { UCrop.getOutput(it) }
                 val resultIntent = Intent()
@@ -52,7 +53,7 @@ class MergedImage : AppCompatActivity() {
             }
         }
 
-        b.launch(a)
+        cropLauncher.launch(croppedIntent)
 
     }
 

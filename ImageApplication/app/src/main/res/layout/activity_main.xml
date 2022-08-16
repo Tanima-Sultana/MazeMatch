@@ -1,10 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:id="@+id/MainView"
+    tools:context=".MainActivity"
+    android:visibility="visible">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:defaultNavHost = "true"
+        app:navGraph = "@navigation/nav_graph"
+         />
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Please Select any image below 200KB"
+        android:textColor="@color/black"
+        android:layout_marginTop="@dimen/fab_margin"
+        android:layout_marginBottom="@dimen/fab_margin"
+        android:visibility="gone"
+        />
 
 
     <Button
@@ -13,6 +37,9 @@
         android:text="Pick Image"
         android:id="@+id/btn_image"
         android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="@dimen/fab_margin"
+        android:visibility="gone"
+
         />
 
 
@@ -20,16 +47,17 @@
         android:layout_width="match_parent"
         android:layout_height="300dp"
         android:id="@+id/iv_souceImage"
+        android:visibility="gone"
 
         android:layout_gravity="center_horizontal"
         android:background="@color/cardview_dark_background"/>
 
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:id="@+id/btn_splitImage"
-        android:visibility="gone"
-        android:text="Edit Image"/>
-</LinearLayout>
+<!--    <Button-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="center_horizontal"-->
+<!--        android:id="@+id/btn_splitImage"-->
+<!--        android:visibility="gone"-->
+<!--        android:text="Edit Image"/>-->
+</FrameLayout>

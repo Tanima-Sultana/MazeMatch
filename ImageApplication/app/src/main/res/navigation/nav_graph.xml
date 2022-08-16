@@ -14,6 +14,21 @@
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
-            app:destination="@id/SecondFragment" />
+            app:destination="@id/VerifyOTPFragment" />
+        <argument
+            android:name="phoneNumber"/>
+        <argument
+            android:name="verificationID"
+            />
     </fragment>
+
+    <fragment
+        android:id="@+id/VerifyOTPFragment"
+        android:name="com.example.imageapplication.VerifyOTPFragment"
+        android:label="Verify OTP"
+        tools:layout="@layout/fragment_verify_otp">
+
+    </fragment>
+
+
 </navigation>

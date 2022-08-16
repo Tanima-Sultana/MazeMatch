@@ -1,9 +1,13 @@
 package com.example.imageapplication
 
+import android.Manifest.permission.ACCESS_FINE_LOCATION
+import android.Manifest.permission.CAMERA
 import android.app.Activity
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -17,22 +21,26 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import com.example.imageapplication.float.SimpleFloatingWindow
-import com.example.imageapplication.float.canDrawOverlays
+import androidx.navigation.NavController
+import androidx.navigation.Navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import com.example.imageapplication.float.showToast
 import java.io.File
+import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
+    private lateinit var navController: NavController
+    private lateinit var navHostFragment: NavHostFragment
+    private lateinit var loadImage: ActivityResultLauncher<String>
     private lateinit var cropImageLuncher: ActivityResultLauncher<Intent>
-    private lateinit var floatImage: ActivityResultLauncher<String>
-    private lateinit var simpleFloatingWindow: SimpleFloatingWindow
     private var uri: Uri? = null
     private lateinit var currentImagePath: String
-    private var split_image: Button? = null
+    private var splitImage: Button? = null
     private var btnGallery: Button? = null
 
     private var sourceImage: ImageView? = null
@@ -41,19 +49,22 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         setContentView(R.layout.activity_main)
+
+//        val transaction = supportFragmentManager.beginTransaction()
+//            .add(R.id.MainView,SecondFragment())
+//        transaction.addToBackStack("")
+//        transaction.commit()
+
+        navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navController = navHostFragment.navController
+
+        //navController.navigate(R.id.action_MainActivity_to_secondFragment)
+
+
         btnGallery = findViewById(R.id.btn_image)
         sourceImage = findViewById(R.id.iv_souceImage)
-        split_image = findViewById(R.id.btn_splitImage)
-
-
-        simpleFloatingWindow = SimpleFloatingWindow(applicationContext)
-//        if ()
-//
-//        split_image?.setOnClickListener {
-//           cropImage()
-//
-//        }
-
+        //splitImage = findViewById(R.id.btn_splitImage)
 
         cropImageLuncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){
             if(it.resultCode == Activity.RESULT_OK ){
@@ -67,26 +78,21 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        val loadImage = registerForActivityResult(ActivityResultContracts.GetContent()){
+        loadImage = registerForActivityResult(ActivityResultContracts.GetContent()){
             if(it != null){
                 Log.d("MainActivity","image data : $it and ${it.path}")
-                sourceImage?.setImageURI(it)
-                cropImage(it)
-            }
-        }
 
-        floatImage = registerForActivityResult(ActivityResultContracts.GetContent()){
-            if(it != null){
-                if(canDrawOverlays){
-                    simpleFloatingWindow.show()
+                if (getImageSize(it)!! <200){
+                    sourceImage?.setImageURI(it)
+                    cropImage(it)
                 }else{
-                    showToast("Permission is required")
+                    showMessageOKCancel("Your image is above 200kb",null)
                 }
             }
         }
 
         btnGallery?.setOnClickListener {
-            pickImageFromGallery(loadImage)
+            pickImageFromGallery()
         }
     }
 
@@ -100,13 +106,63 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasCameraPermission() = ContextCompat.checkSelfPermission(this,
-    android.Manifest.permission.CAMERA)
+    CAMERA
+    )
     private fun hasExternalWritePermission() = ContextCompat.checkSelfPermission(this,
     android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     private fun hasExternalReadPermission() = ContextCompat.checkSelfPermission(this,
         android.Manifest.permission.READ_EXTERNAL_STORAGE
     )
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if(grantResults.isNotEmpty()){
+            val cameraAccepted = grantResults[0]== PackageManager.PERMISSION_GRANTED
+            val readStorageAccepted = grantResults[1] == PackageManager.PERMISSION_GRANTED
+            val writeExternalAccepted = grantResults[2] == PackageManager.PERMISSION_GRANTED
+
+            if(cameraAccepted && writeExternalAccepted){
+                Log.d("Permission","all permission are accepted")
+                takePicture()
+            }else if(readStorageAccepted){
+                loadImage.launch("image/*")
+            }else{
+                //Snackbar.make(this,"Permission denied,",Snackbar.LENGTH_LONG)
+                showToast("Permission denied")
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (shouldShowRequestPermissionRationale(ACCESS_FINE_LOCATION)) {
+                        showMessageOKCancel("You need to allow access to both the permissions"
+                        ) { _, _ ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                requestPermissions(
+                                    arrayOf(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                                        android.Manifest.permission.READ_EXTERNAL_STORAGE, CAMERA),
+                                    1
+                                )
+                            }
+                        }
+                        return
+                    }
+                }
+
+            }
+        }
+    }
+
+    private fun showMessageOKCancel(message: String, okListener: DialogInterface.OnClickListener?) {
+        AlertDialog.Builder(this@MainActivity)
+            .setMessage(message)
+            .setPositiveButton("OK", okListener)
+            .setNegativeButton("Cancel", null)
+            .create()
+            .show()
+    }
 
     private fun takePicture(){
 
@@ -129,13 +185,30 @@ class MainActivity : AppCompatActivity() {
     private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { success: Boolean ->
         if (success) {
             Log.d("CameraImage","Image location :$uri")
+            if (getImageSize(uri!!)!! <200){
+                sourceImage?.setImageURI(uri)
+                cropImage(uri)
+            }else{
+                showToast("Your image is above 200kb")
+            }
             // The image was saved into the given Uri -> do something with it
-            sourceImage?.setImageURI(uri)
-            cropImage(uri)
-            //Picasso.get().load(viewModel.profileImageUri).resize(800,800).into(registerImgAvatar)
+
         }else{
             Log.d("CameraImage","Image is not saved")
 
+        }
+    }
+
+    private fun getImageSize(uri: Uri):Int? {
+        return try {
+            val aaa: InputStream? = this.contentResolver.openInputStream(uri)
+            val byteSize: Int? = aaa?.available()
+            val kbSize = byteSize?.div(1024)
+            Log.d("CameraImage", "Image size :$kbSize")
+            kbSize
+        } catch (e: java.lang.Exception) {
+            // here you can handle exception here
+            null
         }
     }
 
@@ -144,17 +217,20 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra("DATA",uri?.toString())
         setResult(101,intent)
         cropImageLuncher.launch(intent)
-        //startActivityForResult(intent,101)
     }
 
-    private fun pickImageFromGallery(loadImage: ActivityResultLauncher<String>) {
+    private fun pickImageFromGallery() {
 
 
       val alertDialog = AlertDialog.Builder(this)
         alertDialog.setTitle("Select ")
-        alertDialog.setPositiveButton("Pick Image"){dialogueInterface, which ->
-            if(hasExternalReadPermission() != PackageManager.PERMISSION_GRANTED){
+        alertDialog.setPositiveButton("Pick Image"){ _, _ ->
+            if(hasExternalReadPermission() != PackageManager.PERMISSION_GRANTED||
+                hasExternalWritePermission() != PackageManager.PERMISSION_GRANTED ||
+                hasExternalReadPermission() != PackageManager.PERMISSION_GRANTED){
                 ActivityCompat.requestPermissions(this, arrayOf(
+                    CAMERA,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     android.Manifest.permission.READ_EXTERNAL_STORAGE),2)
             }else{
                 loadImage.launch("image/*")
@@ -162,18 +238,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        alertDialog.setNegativeButton("Camera"){dialogueInterface, which ->
+        alertDialog.setNegativeButton("Camera"){ _, _ ->
             if(hasCameraPermission() != PackageManager.PERMISSION_GRANTED ||
-                hasExternalWritePermission() != PackageManager.PERMISSION_GRANTED){
-                ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.CAMERA,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE),1)
+                hasExternalWritePermission() != PackageManager.PERMISSION_GRANTED ||
+                    hasExternalReadPermission() != PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this, arrayOf(CAMERA,
+                android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    android.Manifest.permission.READ_EXTERNAL_STORAGE),1)
             }else{
 
                 takePicture()
             }
         }
 
-        alertDialog.setNeutralButton("Cancel"){dialogueInterface, which ->
+        alertDialog.setNeutralButton("Cancel"){ _, _ ->
 
         }
 
