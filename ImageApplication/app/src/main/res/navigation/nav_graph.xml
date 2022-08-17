@@ -3,12 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/SecondFragment">
+    app:startDestination="@id/ImageUploadFragment">
 
 
     <fragment
         android:id="@+id/SecondFragment"
-        android:name="com.example.imageapplication.SecondFragment"
+        android:name="com.example.imageapplication.SendOTPFragment"
         android:label="@string/second_fragment_label"
         tools:layout="@layout/fragment_second">
 
@@ -27,6 +27,28 @@
         android:name="com.example.imageapplication.VerifyOTPFragment"
         android:label="Verify OTP"
         tools:layout="@layout/fragment_verify_otp">
+
+        <action
+            android:id="@+id/action_verifyFragment_to_ImageUpload"
+            app:destination="@+id/ImageUploadFragment"/>
+        <argument
+            android:name="userphonenumber"
+            app:argType="string"
+            app:nullable="true"
+            />
+        <argument
+            android:name="username"
+            app:argType="string"
+            app:nullable="true"
+            />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/ImageUploadFragment"
+        android:name="com.example.imageapplication.ImageUploadFragment"
+        android:label="Upload Your Image"
+        tools:layout="@layout/fragment_image_upload">
 
     </fragment>
 

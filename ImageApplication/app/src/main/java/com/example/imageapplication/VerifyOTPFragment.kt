@@ -9,7 +9,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
+import androidx.navigation.fragment.findNavController
 import com.example.imageapplication.databinding.FragmentVerifyOtpBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
@@ -25,9 +27,10 @@ class VerifyOTPFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_verify_otp, container, false)
+        binding = FragmentVerifyOtpBinding.inflate(inflater,container,false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -76,6 +79,12 @@ class VerifyOTPFragment : Fragment() {
                             Log.d(TAG, "signInWithCredential:success")
 
                             val user = task.result?.user
+                            val userphonenumber = user?.phoneNumber
+                            val username = user?.displayName
+
+                            val bundle = bundleOf("userphonenumber" to userphonenumber,
+                                "username" to username)
+                            findNavController().navigate(R.id.action_verifyFragment_to_ImageUpload,bundle)
                         } else {
                             binding.progressBarVerify.visibility = View.GONE
                             binding.btnVerify.visibility =  View.VISIBLE

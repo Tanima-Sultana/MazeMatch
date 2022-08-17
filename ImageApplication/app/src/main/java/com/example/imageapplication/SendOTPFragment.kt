@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import com.example.imageapplication.databinding.FragmentSecondBinding
 import com.google.firebase.FirebaseException
@@ -18,9 +17,9 @@ import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import java.util.concurrent.TimeUnit
 
-class SecondFragment : Fragment() {
+class SendOTPFragment : Fragment() {
 
-    private val TAG = SecondFragment::class.java.simpleName
+    private val TAG = SendOTPFragment::class.java.simpleName
     private var _binding: FragmentSecondBinding? = null
     private lateinit var mAuth:FirebaseAuth
     private lateinit var callbacks : PhoneAuthProvider.OnVerificationStateChangedCallbacks

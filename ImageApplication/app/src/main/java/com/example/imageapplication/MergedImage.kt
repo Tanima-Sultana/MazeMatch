@@ -13,15 +13,20 @@ import java.io.File
 import java.util.*
 
 class MergedImage : AppCompatActivity() {
-    var result: String? = null
-    var fileUri: Uri? = null
-    lateinit var binding: ActivityMergedImageBinding
+    private var result: String? = null
+    private var fileUri: Uri? = null
+    private lateinit var binding: ActivityMergedImageBinding
 
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("MergedImage","destroy")
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMergedImageBinding.inflate(layoutInflater)
+        ActivityMergedImageBinding.inflate(layoutInflater).also { binding = it }
         setContentView(binding.root)
         readIntent()
 
@@ -38,18 +43,25 @@ class MergedImage : AppCompatActivity() {
                 .useSourceImageAspectRatio()
                 .withMaxResultSize(2000,2000)
                 .getIntent(this)
-                //.start(this)
         }
 
         val cropLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ result1 ->
-            if( result1.resultCode == Activity.RESULT_OK ){
-                val resultUri = result1.data?.let { UCrop.getOutput(it) }
-                val resultIntent = Intent()
-                resultIntent.putExtra("RESULT","$resultUri")
-                setResult(-1,resultIntent)
-                finish()
-            }else if(result1.resultCode == UCrop.RESULT_ERROR){
-                val cropError = result1.data?.let { UCrop.getError(it) }
+            when (result1.resultCode) {
+                Activity.RESULT_OK -> {
+                    val resultUri = result1.data?.let { UCrop.getOutput(it) }
+                    val resultIntent = Intent()
+                    resultIntent.putExtra("RESULT","$resultUri")
+                    setResult(-1,resultIntent)
+                    finish()
+                }
+                UCrop.RESULT_ERROR -> {
+                    val cropError = result1.data?.let { UCrop.getError(it) }
+                    finish()
+                }
+                else -> {
+                    finish()
+                    Log.d("MergedImage","error, ${result1.resultCode}")
+                }
             }
         }
 

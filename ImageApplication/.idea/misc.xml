@@ -10,7 +10,10 @@
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/drawable/ic_baseline_close_24.xml" value="0.236" />
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/drawable/ic_launcher_background.xml" value="0.25" />
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/activity_main.xml" value="0.1" />
+        <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/activity_merged_image.xml" value="0.171875" />
+        <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/content_merged_image.xml" value="0.171875" />
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/fragment_first.xml" value="0.2006340579710145" />
+        <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/fragment_image_upload.xml" value="0.1" />
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/fragment_second.xml" value="0.2164855072463768" />
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/fragment_verify_otp.xml" value="0.1" />
         <entry key="..\:/Mazematch/MazeMatch/ImageApplication/app/src/main/res/layout/layout_floating_window.xml" value="0.192481884057971" />
