@@ -2,12 +2,15 @@ package com.example.imageapplication
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentResolver
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -22,8 +25,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import com.example.imageapplication.data.Upload
 import com.example.imageapplication.databinding.FragmentImageUploadBinding
 import com.google.android.gms.tasks.OnSuccessListener
+import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
@@ -36,6 +41,7 @@ import java.util.*
 
 class ImageUploadFragment : Fragment() {
 
+    private lateinit var resultUri: Uri
     private lateinit var binding: FragmentImageUploadBinding
 
     private lateinit var loadImage: ActivityResultLauncher<String>
@@ -48,6 +54,7 @@ class ImageUploadFragment : Fragment() {
 
     private lateinit var mStorageRef:StorageReference
     private lateinit var mDatabaseRef:DatabaseReference
+    private val TAG = ImageUploadFragment::class.java.simpleName
 
 
     companion object {
@@ -79,7 +86,7 @@ class ImageUploadFragment : Fragment() {
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (it.resultCode == Activity.RESULT_OK) {
                     val result = it.data?.getStringExtra("RESULT")
-                    var resultUri: Uri? = null
+                    //resultUri: Uri? = null
                     if (result != null) {
                         resultUri = Uri.parse(result)
                     }
@@ -103,6 +110,10 @@ class ImageUploadFragment : Fragment() {
 
         btnGallery?.setOnClickListener {
             pickImageFromGallery()
+        }
+
+        binding.btnUpload.setOnClickListener {
+            uploadFile()
         }
     }
 
@@ -162,8 +173,7 @@ class ImageUploadFragment : Fragment() {
             it.value
         }
         if (granted) {
-            loadImage.launch("image/*")
-
+            takePicture()
             //pickImageFromGallery()
         }
     }
@@ -172,7 +182,7 @@ class ImageUploadFragment : Fragment() {
         ActivityResultContracts.RequestPermission()
     ) {
         if (it) {
-            takePicture()
+            loadImage.launch("image/*")
         }
     }
 
@@ -240,7 +250,7 @@ class ImageUploadFragment : Fragment() {
     private fun createImageFile(): File {
         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val imageDirectory = requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("Specimen_${timestamp}", ".jpg", imageDirectory).apply {
+        return File.createTempFile(timestamp, ".jpg", imageDirectory).apply {
             currentImagePath = absolutePath
         }
     }
@@ -261,28 +271,57 @@ class ImageUploadFragment : Fragment() {
     }
 
     private fun getFileExtension(uri:Uri):String?{
-        val cr = requireActivity().contentResolver
-        val mime = MimeTypeMap.getSingleton()
-        return mime.getExtensionFromMimeType(cr.getType(uri))
+
+        val extension = if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
+            //If scheme is a content
+            val mime = MimeTypeMap.getSingleton()
+            mime.getExtensionFromMimeType(requireContext().contentResolver.getType(uri))
+        } else {
+            //If scheme is a File
+            //This will replace white spaces with %20 and also other special characters. This will avoid returning null values on file name with spaces and special characters.
+            MimeTypeMap.getFileExtensionFromUrl(Uri.fromFile(uri.path?.let { File(it) }).toString())
+        }
+
+        return extension
     }
 
     private fun uploadFile(){
-        if(sourceImage?.isDirty == true && uri != null){
 
-            val fileReference = mStorageRef.child("uploads/"+System.currentTimeMillis()
-            +"."+ uri?.let { getFileExtension(it) })
-            fileReference.putFile(uri!!)
-                .addOnSuccessListener {
+        val fileReference = mStorageRef.child(System.currentTimeMillis().toString()
+                +"."+ getFileExtension(resultUri)
+        )
 
+        Log.d(TAG,"resultUri : $resultUri and fileReference name : ${System.currentTimeMillis().toString()
+                +"."+ getFileExtension(resultUri)}")
 
-                }.addOnFailureListener{
+        fileReference.putFile(resultUri)
+            .addOnSuccessListener {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    binding.pbUpload.progress = 100
+                }, 10000)
 
-                }.addOnProgressListener {
-                    val progress = (it.bytesTransferred / it.totalByteCount) * 100.0
+                if (it.metadata?.reference != null) {
+                    val result: Task<Uri> = it.storage.downloadUrl
+                    result.addOnSuccessListener { p0 ->
+                        val upload = Upload(createImageFile().nameWithoutExtension + ".jpg", p0.toString())
+
+                        val uploadId = mDatabaseRef.push().key
+
+                        if (uploadId != null) {
+                            mDatabaseRef.child(uploadId).setValue(upload)
+                        }
+                    }
                 }
-        }else{
-            Toast.makeText(requireContext(),"No file to upload",Toast.LENGTH_SHORT).show()
-        }
+
+            }.addOnFailureListener{
+                Toast.makeText(requireContext(),"${it.message}",Toast.LENGTH_SHORT).show()
+
+            }.addOnProgressListener {
+                val progress = (it.bytesTransferred / it.totalByteCount) * 100.0
+                binding.pbUpload.progress = progress.toInt()
+
+            }
+
     }
 
 }
