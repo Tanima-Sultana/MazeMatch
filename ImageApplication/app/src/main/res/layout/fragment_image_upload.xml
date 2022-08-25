@@ -35,18 +35,20 @@
         android:layout_gravity="center_horizontal"
         android:background="@color/cardview_dark_background"
         android:layout_marginBottom="@dimen/fab_margin"
+        android:src="@drawable/ic_baseline_image_24"
         />
 
     <ProgressBar
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="10dp"
         style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_marginStart="@dimen/fab_margin"
         android:layout_marginEnd="@dimen/fab_margin"
         android:id="@+id/pb_upload"
         android:layout_gravity="center"
         android:layout_marginBottom="@dimen/fab_margin"
-        android:progress="25"
+        android:progress="0"
+        android:visibility="invisible"
 
         />
 
@@ -57,6 +59,17 @@
         android:text="Upload"
         android:textAlignment="center"
         android:layout_gravity="center"
+        android:visibility="invisible"
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_showImage"
+        android:text="Show Images"
+        android:textAlignment="center"
+        android:layout_gravity="center"
+        android:visibility="invisible"
         />
 
 

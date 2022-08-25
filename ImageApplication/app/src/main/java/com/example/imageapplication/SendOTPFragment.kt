@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.example.imageapplication.databinding.FragmentSecondBinding
+import com.example.imageapplication.databinding.FragmentSendOtpBinding
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthCredential
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 class SendOTPFragment : Fragment() {
 
     private val TAG = SendOTPFragment::class.java.simpleName
-    private var _binding: FragmentSecondBinding? = null
+    private var _binding: FragmentSendOtpBinding? = null
     private lateinit var mAuth:FirebaseAuth
     private lateinit var callbacks : PhoneAuthProvider.OnVerificationStateChangedCallbacks
 
@@ -31,7 +31,7 @@ class SendOTPFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
-        _binding = FragmentSecondBinding.inflate(inflater, container, false)
+        _binding = FragmentSendOtpBinding.inflate(inflater, container, false)
         return binding.root
 
     }
@@ -102,16 +102,10 @@ class SendOTPFragment : Fragment() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                //TODO FIXME this part will be replaced as any fragment
                 val bundle = bundleOf("phoneNumber" to binding.etPhone.text.toString().trim(),
                     "verificationId" to verificationId)
-
-                //val b = requireActivity().findNavController()
                 findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment,bundle)
-//                val intent = Intent(this@OtpSendActivity, OtpVerifyActivity::class.java)
-//                intent.putExtra("phone", binding.etPhone.text.toString().trim())
-//                intent.putExtra("verificationId", verificationId)
-//                startActivity(intent)
+
 
             }
         }

@@ -85,5 +85,9 @@ dependencies {
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation 'com.google.firebase:firebase-auth'
 
+    //to show image we used picasso library
+
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
 
 }

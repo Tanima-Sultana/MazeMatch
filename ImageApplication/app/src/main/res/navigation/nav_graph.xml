@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/SecondFragment">
+    app:startDestination="@id/LoginFragment">
 
 
     <fragment
-        android:id="@+id/SecondFragment"
+        android:id="@+id/SendOtpFragment"
         android:name="com.example.imageapplication.SendOTPFragment"
         android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        tools:layout="@layout/fragment_send_otp">
 
         <action
             android:id="@+id/action_SecondFragment_to_FirstFragment"
@@ -31,6 +31,12 @@
         <action
             android:id="@+id/action_verifyFragment_to_ImageUpload"
             app:destination="@+id/ImageUploadFragment"/>
+
+
+        <action
+            android:id="@+id/action_verifyFragment_to_SetPassword"
+            app:destination="@+id/LoginFragment"/>
+
         <argument
             android:name="userphonenumber"
             app:argType="string"
@@ -49,6 +55,34 @@
         android:name="com.example.imageapplication.ImageUploadFragment"
         android:label="Upload Your Image"
         tools:layout="@layout/fragment_image_upload">
+        <action
+            android:id="@+id/action_UploadImage_to_seeImage"
+            app:destination="@+id/UploadedImagesFragment"/>
+
+    </fragment>
+
+
+    <fragment
+        android:id="@+id/UploadedImagesFragment"
+        android:name="com.example.imageapplication.UploadedImagesFragment"
+        android:label="All Uploaded Images"
+        tools:layout="@layout/fragment_uploaded_images">
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/LoginFragment"
+        android:name="com.example.imageapplication.LoginFragment"
+        tools:layout="@layout/fragment_login"
+        android:label="Login">
+
+        <action
+            android:id="@+id/action_LoginFragment_to_SendOtpFragment"
+            app:destination="@id/SendOtpFragment"/>
+
+        <action
+            android:id="@+id/action_LoginFragment_to_ImageUploadFragment"
+            app:destination="@id/ImageUploadFragment"/>
 
     </fragment>
 

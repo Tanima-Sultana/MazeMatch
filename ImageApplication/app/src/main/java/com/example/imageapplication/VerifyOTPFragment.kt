@@ -84,7 +84,7 @@ class VerifyOTPFragment : Fragment() {
 
                             val bundle = bundleOf("userphonenumber" to userphonenumber,
                                 "username" to username)
-                            findNavController().navigate(R.id.action_verifyFragment_to_ImageUpload,bundle)
+                            findNavController().navigate(R.id.action_verifyFragment_to_SetPassword,bundle)
                         } else {
                             binding.progressBarVerify.visibility = View.GONE
                             binding.btnVerify.visibility =  View.VISIBLE

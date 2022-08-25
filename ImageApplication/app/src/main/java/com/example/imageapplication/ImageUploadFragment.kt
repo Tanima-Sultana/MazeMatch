@@ -16,8 +16,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.MimeTypeMap
-import android.widget.Button
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,14 +23,16 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.example.imageapplication.data.Upload
 import com.example.imageapplication.databinding.FragmentImageUploadBinding
-import com.google.android.gms.tasks.OnSuccessListener
 import com.google.android.gms.tasks.Task
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import com.google.firebase.storage.StorageTask
+import com.google.firebase.storage.UploadTask
 import java.io.File
 import java.io.InputStream
 import java.text.SimpleDateFormat
@@ -41,6 +41,7 @@ import java.util.*
 
 class ImageUploadFragment : Fragment() {
 
+    private var mUploadTask: StorageTask<UploadTask.TaskSnapshot>? = null
     private lateinit var resultUri: Uri
     private lateinit var binding: FragmentImageUploadBinding
 
@@ -48,12 +49,11 @@ class ImageUploadFragment : Fragment() {
     private lateinit var cropImageLuncher: ActivityResultLauncher<Intent>
     private var uri: Uri? = null
     private lateinit var currentImagePath: String
-    private var btnGallery: Button? = null
 
-    private var sourceImage: ImageView? = null
 
     private lateinit var mStorageRef:StorageReference
     private lateinit var mDatabaseRef:DatabaseReference
+
     private val TAG = ImageUploadFragment::class.java.simpleName
 
 
@@ -77,21 +77,21 @@ class ImageUploadFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        btnGallery = binding.btnImage
-        sourceImage = binding.ivSouceImage
         mStorageRef = FirebaseStorage.getInstance().getReference("uploads")
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("uploads")
+
 
         cropImageLuncher =
             registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (it.resultCode == Activity.RESULT_OK) {
                     val result = it.data?.getStringExtra("RESULT")
-                    //resultUri: Uri? = null
                     if (result != null) {
                         resultUri = Uri.parse(result)
                     }
 
-                    sourceImage?.setImageURI(resultUri)
+                    binding.ivSouceImage.setImageURI(resultUri)
+                    binding.btnUpload.visibility = View.VISIBLE
+                    binding.pbUpload.visibility = View.VISIBLE
                 }
             }
 
@@ -100,7 +100,7 @@ class ImageUploadFragment : Fragment() {
                 Log.d("MainActivity", "image data : $it and ${it.path}")
 
                 if (getImageSize(it)!! < 200) {
-                    sourceImage?.setImageURI(it)
+                    binding.ivSouceImage.setImageURI(it)
                     cropImage(it)
                 } else {
                     showMessageOKCancel("Your image is above 200kb", null)
@@ -108,12 +108,22 @@ class ImageUploadFragment : Fragment() {
             }
         }
 
-        btnGallery?.setOnClickListener {
+        binding.btnImage.setOnClickListener {
             pickImageFromGallery()
         }
 
         binding.btnUpload.setOnClickListener {
-            uploadFile()
+            if (mUploadTask != null && mUploadTask?.isInProgress == true){
+                Toast.makeText(requireContext(),"Upload is in progress",Toast.LENGTH_LONG).show()
+            }else{
+                //binding.btnUpload.visibility = View.GONE
+                uploadFile()
+
+            }
+        }
+
+        binding.btnShowImage.setOnClickListener {
+            findNavController().navigate(R.id.action_UploadImage_to_seeImage)
         }
     }
 
@@ -122,7 +132,6 @@ class ImageUploadFragment : Fragment() {
         val intent = Intent(requireContext(), MergedImage::class.java)
         intent.putExtra("DATA", uri?.toString())
         requireActivity().setResult(101, intent)
-        //setResult(101,intent)
         cropImageLuncher.launch(intent)
     }
 
@@ -131,14 +140,14 @@ class ImageUploadFragment : Fragment() {
             if (success) {
                 Log.d("CameraImage", "Image location :$uri")
                 if (getImageSize(uri!!)!! < 200) {
-                    sourceImage?.setImageURI(uri)
+                    binding.ivSouceImage.setImageURI(uri)
                     cropImage(uri)
                 } else {
-                    Toast.makeText(
-                        requireContext(), "Your image is above 200kb",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    //showToast("Your image is above 200kb")
+//                    Toast.makeText(
+//                        requireContext(), "Your image is above 200kb",
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+                    showMessageOKCancel("Your image is above 200kb",null)
                 }
                 // The image was saved into the given Uri -> do something with it
 
@@ -166,7 +175,7 @@ class ImageUploadFragment : Fragment() {
 
     }
 
-    val requestMultiplePermissions = registerForActivityResult(
+    private val requestMultiplePermissions = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permission ->
         val granted = permission.entries.all {
@@ -178,7 +187,7 @@ class ImageUploadFragment : Fragment() {
         }
     }
 
-    val requestSinglePermission = registerForActivityResult(
+    private val requestSinglePermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
         if (it) {
@@ -294,7 +303,7 @@ class ImageUploadFragment : Fragment() {
         Log.d(TAG,"resultUri : $resultUri and fileReference name : ${System.currentTimeMillis().toString()
                 +"."+ getFileExtension(resultUri)}")
 
-        fileReference.putFile(resultUri)
+       mUploadTask =  fileReference.putFile(resultUri)
             .addOnSuccessListener {
                 Handler(Looper.getMainLooper()).postDelayed({
                     binding.pbUpload.progress = 100
@@ -310,6 +319,9 @@ class ImageUploadFragment : Fragment() {
                         if (uploadId != null) {
                             mDatabaseRef.child(uploadId).setValue(upload)
                         }
+                        binding.btnUpload.visibility = View.GONE
+                        binding.btnShowImage.visibility = View.VISIBLE
+
                     }
                 }
 
@@ -323,6 +335,8 @@ class ImageUploadFragment : Fragment() {
             }
 
     }
+
+
 
 }
 
