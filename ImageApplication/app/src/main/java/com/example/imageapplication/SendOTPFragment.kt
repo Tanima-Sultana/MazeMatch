@@ -108,6 +108,10 @@ class SendOTPFragment : Fragment() {
 
 
             }
+
+            override fun onCodeAutoRetrievalTimeOut(p0: String) {
+                super.onCodeAutoRetrievalTimeOut(p0)
+            }
         }
         val phoneNumber = "+880${binding.etPhone.text.toString().trim()}"
         Log.d(TAG,"phone number : $phoneNumber")
