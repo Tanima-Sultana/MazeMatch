@@ -3,14 +3,16 @@ package com.example.imageapplication
 import android.Manifest
 import android.app.Activity
 import android.content.ContentResolver
+import android.content.ContentValues
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
 import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
-import android.os.Handler
-import android.os.Looper
+import android.os.*
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -35,6 +37,7 @@ import com.google.firebase.storage.StorageTask
 import com.google.firebase.storage.UploadTask
 import java.io.File
 import java.io.InputStream
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,6 +58,8 @@ class ImageUploadFragment : Fragment() {
     private lateinit var mDatabaseRef:DatabaseReference
 
     private val TAG = ImageUploadFragment::class.java.simpleName
+
+    private var isImageSaved = false
 
 
     companion object {
@@ -92,6 +97,7 @@ class ImageUploadFragment : Fragment() {
                     binding.ivSouceImage.setImageURI(resultUri)
                     binding.btnUpload.visibility = View.VISIBLE
                     binding.pbUpload.visibility = View.VISIBLE
+                    binding.btnSave.visibility = View.VISIBLE
                 }
             }
 
@@ -120,6 +126,12 @@ class ImageUploadFragment : Fragment() {
                 uploadFile()
 
             }
+        }
+
+
+
+        binding.btnSave.setOnClickListener {
+            saveImage()
         }
 
         binding.btnShowImage.setOnClickListener {
@@ -156,6 +168,57 @@ class ImageUploadFragment : Fragment() {
 
             }
         }
+
+
+    private fun saveImage():Boolean{
+        var bitmap:Bitmap? = null
+        val imageUri = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+            MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        }else{
+            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+        }
+
+
+        try {
+            bitmap = if (Build.VERSION.SDK_INT <= 28) {
+                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, resultUri)
+            } else {
+                val source: ImageDecoder.Source = ImageDecoder.createSource(requireContext().contentResolver, resultUri)
+                ImageDecoder.decodeBitmap(source)
+            }
+        }catch (e:Exception){
+            Log.e(TAG,"bitmap conversation exception : ${e.message}")
+        }
+
+
+
+        val contentValues = ContentValues()
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, System.currentTimeMillis().toString())
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+        val uri = requireContext().contentResolver.insert(imageUri,contentValues)
+
+        try {
+
+            val outputStream : OutputStream? = uri?.let {
+                requireContext().contentResolver.openOutputStream(
+                    it
+                )
+            }
+
+            val cc = BitmapFactory.decodeFile(createImageFile().absolutePath)
+            Log.d(TAG,"image stream : $outputStream")
+
+            Log.d(TAG,"image bitmap : $cc")
+            bitmap?.compress(Bitmap.CompressFormat.JPEG,100,outputStream)
+            Toast.makeText(requireContext(),"Saved the image!",Toast.LENGTH_LONG).show()
+
+            return true
+        }catch (e:Exception){
+            Log.d(TAG,"image is not saved ${e.message}\n ${e}")
+            Toast.makeText(requireContext(),"Image is not saved!",Toast.LENGTH_LONG).show()
+            return false
+        }
+    }
 
 
     private fun takePicture() {
